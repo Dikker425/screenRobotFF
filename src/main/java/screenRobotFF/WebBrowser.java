@@ -6,6 +6,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.firefox.ProfilesIni;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -20,6 +21,7 @@ public class WebBrowser {
     public static void autoScreenshot() {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd hh mm ss a");
         Calendar now = Calendar.getInstance();
+        String path = "src/main/resources";
         Robot robot = null;
         try {
             robot = new Robot();
@@ -28,17 +30,17 @@ public class WebBrowser {
         }
         BufferedImage screenShot = robot.createScreenCapture(new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
         try {
-            ImageIO.write(screenShot, "JPG", new File(formatter.format(now.getTime()) + ".jpg"));
+            ImageIO.write(screenShot, "JPG", new File(path, formatter.format(now.getTime()) + ".jpg"));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void browserSetUp(){
+    public static void browserSetUp() {
 
     }
 
-    public static void main(String[] args) throws IOException, AWTException {
+    public static void main(String[] args) throws IOException, AWTException, InterruptedException {
 
         System.setProperty("webdriver.gecko.driver", "C:/Users/dmitry.b/Documents/Geckodriver/geckodriver.exe");
 
@@ -47,7 +49,7 @@ public class WebBrowser {
         FirefoxOptions opt = new FirefoxOptions();
         opt.setProfile(testprofile);
         FirefoxDriver driver = new FirefoxDriver(opt);
-
+        
         driver.get("http://ya.ru");
         driver.findElement(By.tagName("body")).sendKeys(Keys.CONTROL + "t");
         autoScreenshot();
