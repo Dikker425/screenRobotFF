@@ -19,6 +19,7 @@ public class WebBrowser {
 
     public static void autoScreenshot(int screenCount) {
 
+        //Метод для Скриншота
         String path = "src/main/resources/screenshots/";
         Robot robot = null;
         try {
@@ -35,7 +36,7 @@ public class WebBrowser {
     }
 
     public static void waitForLoad(WebDriver driver, int time) {
-
+        //Даем странице прогрузиться
         try {
             Thread.sleep(time);
         } catch (Throwable error) {
@@ -61,6 +62,7 @@ public class WebBrowser {
 
 
     public static void browserSetUp() {
+        //Настройка профиля браузера "firefox.exe -p , Profile Robot"
         System.setProperty("webdriver.gecko.driver", "src/main/resources/Geckodriver/geckodriver.exe");
         ProfilesIni profile = new ProfilesIni();
         FirefoxOptions opt = new FirefoxOptions();
@@ -73,6 +75,7 @@ public class WebBrowser {
 
         browserSetUp();
 
+        //Открываем файл на запись результатов resultTable.csv (разделетиль "," )
         FileWriter writer = new FileWriter("src\\main\\resources\\resultTable.csv");
         writer.write("URL" + "," + "REDIRECT STATUS" + "," + "SCREENSHOT" + "\n");
 
