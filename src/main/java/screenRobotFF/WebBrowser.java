@@ -1,27 +1,25 @@
 package screenRobotFF;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.firefox.ProfilesIni;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+
 
 public class WebBrowser {
 
-    public static void autoScreenshot() {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd hh mm ss a");
-        Calendar now = Calendar.getInstance();
-        String path = "src/main/resources";
+    private static WebDriver driver;
+
+    public static void autoScreenshot(int screenCount) {
+
+        String path = "src/main/resources/screenshots/";
         Robot robot = null;
         try {
             robot = new Robot();
@@ -30,32 +28,77 @@ public class WebBrowser {
         }
         BufferedImage screenShot = robot.createScreenCapture(new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
         try {
-            ImageIO.write(screenShot, "JPG", new File(path, formatter.format(now.getTime()) + ".jpg"));
+            ImageIO.write(screenShot, "JPG", new File(path, "Rbt_" + screenCount + ".jpg"));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void browserSetUp() {
+    public static void waitForLoad(WebDriver driver, int time) {
+
+        try {
+            Thread.sleep(time);
+        } catch (Throwable error) {
+            error.printStackTrace();
+        }
 
     }
 
-    public static void main(String[] args) throws IOException, AWTException, InterruptedException {
+    public static String checkDomain(String data) {
 
-        System.setProperty("webdriver.gecko.driver", "C:/Users/dmitry.b/Documents/Geckodriver/geckodriver.exe");
+        URI uri = null;
+        try {
+            uri = new URI(data);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        String hostname = uri.getHost();
+        if (hostname != null) {
+            System.out.println(hostname.startsWith("www.") ? hostname.substring(4) : hostname);
+        }
+        return hostname;
+    }
 
+
+    public static void browserSetUp() {
+        System.setProperty("webdriver.gecko.driver", "src/main/resources/Geckodriver/geckodriver.exe");
         ProfilesIni profile = new ProfilesIni();
-        FirefoxProfile testprofile = profile.getProfile("Robot");
         FirefoxOptions opt = new FirefoxOptions();
-        opt.setProfile(testprofile);
-        FirefoxDriver driver = new FirefoxDriver(opt);
-        
-        driver.get("http://ya.ru");
-        driver.findElement(By.tagName("body")).sendKeys(Keys.CONTROL + "t");
-        autoScreenshot();
-        driver.get("https://www.youtube.com/watch?v=N8Rr7rVf1RA");
-        autoScreenshot();
-        driver.close();
+        FirefoxOptions robot = opt.setProfile(profile.getProfile("Robot"));
+        driver = new FirefoxDriver(robot);
+        driver.manage().window().maximize();
+    }
 
+    public static void main(String[] args) throws IOException {
+
+        browserSetUp();
+
+        FileWriter writer = new FileWriter("src\\main\\resources\\resultTable.csv");
+        writer.write("URL" + "," + "REDIRECT STATUS" + "," + "SCREENSHOT" + "\n");
+
+        //Читаем файл input.txt
+        FileReader reader = new FileReader("src\\main\\resources\\input.txt");
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        String url;
+        int screenCount = 1;
+
+        while ((url = bufferedReader.readLine()) != null) {
+
+            driver.get(url);
+            waitForLoad(driver, 4000);
+            autoScreenshot(screenCount);
+
+            System.out.println(driver.getCurrentUrl().trim());
+            if (!(url.equals(driver.getCurrentUrl().trim()))) {
+                writer.write(url + "," + driver.getCurrentUrl().trim() + "," + "Rbt_" + screenCount + "\n");
+            } else {
+                writer.write(url + "," + "OK" + "," + "Rbt_" + screenCount + "\n");
+            }
+            screenCount++;
+
+        }
+        writer.close();
+        reader.close();
+        driver.quit();
     }
 }
