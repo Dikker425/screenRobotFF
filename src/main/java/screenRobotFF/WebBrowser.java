@@ -1,9 +1,13 @@
 package screenRobotFF;
 
+import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.ProfilesIni;
+import org.openqa.selenium.interactions.Actions;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -71,6 +75,16 @@ public class WebBrowser {
         driver.manage().window().maximize();
     }
 
+    public static void ugcSitesPlayerClicker(){
+
+        try {
+            WebElement player = driver.findElement(By.className("ytp-progress-bar-padding"));
+            Actions actions = new Actions(driver);
+            actions.click(player).build().perform();
+        } catch (NoSuchElementException e){
+        }
+    }
+
     public static void main(String[] args) throws IOException {
 
         browserSetUp();
@@ -88,17 +102,23 @@ public class WebBrowser {
         while ((url = bufferedReader.readLine()) != null) {
 
             driver.get(url);
+            ugcSitesPlayerClicker();
             waitForLoad(driver, 4000);
-            autoScreenshot(screenCount);
 
-            System.out.println(driver.getCurrentUrl().trim());
+            String pageSource = driver.getPageSource();
+
             if (!(url.equals(driver.getCurrentUrl().trim()))) {
                 writer.write(url + "," + driver.getCurrentUrl().trim() + "," + "Rbt_" + screenCount + "\n");
+            }
+            if (pageSource.contains("https://www.cloudflare.com/5xx-error-landing?utm_source=iuam")) {
+                waitForLoad(driver, 6000);
+                writer.write(url + "," + "Cloudflare DDoS Protection" + "," + "Rbt_" + screenCount + "\n");
             } else {
+
                 writer.write(url + "," + "OK" + "," + "Rbt_" + screenCount + "\n");
             }
+            autoScreenshot(screenCount);
             screenCount++;
-
         }
         writer.close();
         reader.close();
