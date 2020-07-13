@@ -7,7 +7,6 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
-import org.openqa.selenium.firefox.ProfilesIni;
 import org.openqa.selenium.interactions.Actions;
 
 import javax.imageio.ImageIO;
@@ -19,11 +18,18 @@ import java.io.*;
 public class WebBrowser {
 
     private static WebDriver driver;
+    private static final String path = "src/main/resources/screenshots/";
+    private static final String inputPATH = "src/main/resources/input.txt";
+    private static final String resultTablePATH = "src/main/resources/resultTable.csv";
+
 
     public static void autoScreenshot(int screenCount) {
 
         //Метод для Скриншота
-        String path = "src/main/resources/screenshots/";
+
+        File dir = new File(path);
+        dir.mkdir();
+
         Robot robot = null;
         try {
             robot = new Robot();
@@ -32,7 +38,7 @@ public class WebBrowser {
         }
         BufferedImage screenShot = robot.createScreenCapture(new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
         try {
-            ImageIO.write(screenShot, "JPG", new File(path, "Rbt_" + screenCount + ".jpg"));
+            ImageIO.write(screenShot, "JPG", new File(path, "WKr" + screenCount + ".jpg"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -45,19 +51,23 @@ public class WebBrowser {
         } catch (Throwable error) {
             error.printStackTrace();
         }
-
     }
 
     public static void browserSetUp() {
         //Настройка профиля браузера "firefox.exe -p , Profile Robot"
-        System.setProperty("webdriver.gecko.driver", "src/main/resources/Geckodriver/geckodriver.exe");
+
+        if (System.getProperty("os.name").equals("Linux")) {
+            System.setProperty("webdriver.gecko.driver", "src/main/resources/Geckodriver/geckodriver");
+        } else {
+            System.setProperty("webdriver.gecko.driver", "src/main/resources/Geckodriver/geckodriver.exe");
+        }
 
         //ProfilesIni profile = new ProfilesIni();
         FirefoxOptions opt = new FirefoxOptions();
         FirefoxProfile robotProfile = new FirefoxProfile();
-        robotProfile.setPreference("network.proxy.type",1);
-        robotProfile.setPreference("network.proxy.socks", "51.144.228.148");
-        robotProfile.setPreference("network.proxy.socks_port", 1080);
+//        robotProfile.setPreference("network.proxy.type", 1);
+//        robotProfile.setPreference("network.proxy.socks", "51.144.228.148");
+//        robotProfile.setPreference("network.proxy.socks_port", 1080);
 
         opt.setProfile(robotProfile);
 
@@ -92,11 +102,19 @@ public class WebBrowser {
                 actions.click(playerVKHover).build().perform();
             }
 
+            if (driver.getCurrentUrl().contains("sibnet.ru")){
+                System.out.println("sibnet.ru");
+                WebElement playerSibnetHover = driver.findElement(By.className("vjs-big-play-button"));
+                Thread.sleep(2000);
+                actions.click(playerSibnetHover).build().perform();
+                WebElement playerSibnet = driver.findElement(By.className("vjs-progress-tip"));
+                actions.moveToElement(playerSibnet).click().build().perform();
+            }
+
             if (driver.getCurrentUrl().contains("youtube.com")) {
 
                 WebElement playerYT = driver.findElement(By.className("ytp-progress-bar-padding"));
                 actions.click(playerYT).build().perform();
-
             }
 
         } catch (NoSuchElementException | InterruptedException e) {
@@ -108,11 +126,11 @@ public class WebBrowser {
         browserSetUp();
 
         //Открываем файл на запись результатов resultTable.csv (разделетиль "," )
-        FileWriter writer = new FileWriter("src/main/resources/resultTable.csv");
+        FileWriter writer = new FileWriter(resultTablePATH);
         writer.write("URL" + "," + "REDIRECT STATUS" + "," + "SCREENSHOT" + "\n");
 
         //Читаем файл input.txt
-        FileReader reader = new FileReader("src/main/resources/input.txt");
+        FileReader reader = new FileReader(inputPATH);
         BufferedReader bufferedReader = new BufferedReader(reader);
         String url;
         int screenCount = 1;
@@ -123,16 +141,16 @@ public class WebBrowser {
             playerClickerUGC();
             waitForLoad(driver, 4000);
 
-            String pageSource = driver.getPageSource();
+            String pageSource = driver.getPageSource(); // Для проверки кода на Cloudflare DDoS Protection
 
             if (!(url.equals(driver.getCurrentUrl().trim()))) {
-                writer.write(url + "," + driver.getCurrentUrl().trim() + "," + "Rbt_" + screenCount + "\n");
+                writer.write(url + "," + driver.getCurrentUrl().trim() + "," + "WKr_" + screenCount + "\n");
             }
             if (pageSource.contains("https://www.cloudflare.com/5xx-error-landing?utm_source=iuam")) {
-                writer.write(url + "," + "Cloudflare DDoS Protection" + "," + "Rbt_" + screenCount + "\n");
+                writer.write(url + "," + "Cloudflare DDoS Protection" + "," + "WKr_" + screenCount + "\n");
             } else {
 
-                writer.write(url + "," + "OK" + "," + "Rbt_" + screenCount + "\n");
+                writer.write(url + "," + "NoRedirect" + "," + "WKr_" + screenCount + "\n");
             }
             autoScreenshot(screenCount);
             screenCount++;
