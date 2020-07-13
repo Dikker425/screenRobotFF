@@ -108,11 +108,11 @@ public class WebBrowser {
         browserSetUp();
 
         //Открываем файл на запись результатов resultTable.csv (разделетиль "," )
-        FileWriter writer = new FileWriter("src\\main\\resources\\resultTable.csv");
+        FileWriter writer = new FileWriter("src/main/resources/resultTable.csv");
         writer.write("URL" + "," + "REDIRECT STATUS" + "," + "SCREENSHOT" + "\n");
 
         //Читаем файл input.txt
-        FileReader reader = new FileReader("src\\main\\resources\\input.txt");
+        FileReader reader = new FileReader("src/main/resources/input.txt");
         BufferedReader bufferedReader = new BufferedReader(reader);
         String url;
         int screenCount = 1;
