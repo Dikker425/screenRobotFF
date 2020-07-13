@@ -6,6 +6,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.firefox.ProfilesIni;
 import org.openqa.selenium.interactions.Actions;
 
@@ -13,8 +14,6 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 
 public class WebBrowser {
@@ -49,39 +48,58 @@ public class WebBrowser {
 
     }
 
-    public static String checkDomain(String data) {
-
-        URI uri = null;
-        try {
-            uri = new URI(data);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-        String hostname = uri.getHost();
-        if (hostname != null) {
-            System.out.println(hostname.startsWith("www.") ? hostname.substring(4) : hostname);
-        }
-        return hostname;
-    }
-
-
     public static void browserSetUp() {
         //Настройка профиля браузера "firefox.exe -p , Profile Robot"
         System.setProperty("webdriver.gecko.driver", "src/main/resources/Geckodriver/geckodriver.exe");
-        ProfilesIni profile = new ProfilesIni();
+
+        //ProfilesIni profile = new ProfilesIni();
         FirefoxOptions opt = new FirefoxOptions();
-        FirefoxOptions robot = opt.setProfile(profile.getProfile("Robot"));
-        driver = new FirefoxDriver(robot);
+        FirefoxProfile robotProfile = new FirefoxProfile();
+        robotProfile.setPreference("network.proxy.type",1);
+        robotProfile.setPreference("network.proxy.socks", "51.144.228.148");
+        robotProfile.setPreference("network.proxy.socks_port", 1080);
+
+        opt.setProfile(robotProfile);
+
+        driver = new FirefoxDriver(opt);
         driver.manage().window().maximize();
     }
 
-    public static void ugcSitesPlayerClicker(){
+    public static void playerClickerUGC() {
 
         try {
-            WebElement player = driver.findElement(By.className("ytp-progress-bar-padding"));
+
             Actions actions = new Actions(driver);
-            actions.click(player).build().perform();
-        } catch (NoSuchElementException e){
+
+            if (driver.getCurrentUrl().contains("ok.ru")) {
+
+                System.out.println("ok.ru");
+                Thread.sleep(2000);
+
+                WebElement playerOKHoverElement = driver.findElement(By.className("vid-card_player"));
+                actions.click(playerOKHoverElement).build().perform();
+                WebElement playerOK = driver.findElement(By.className("html5-vpl_panel_progress-bar"));
+                actions.moveToElement(playerOK, 0, 0).click().build().perform();
+            }
+            if (driver.getCurrentUrl().contains("vk.com")) {
+                System.out.println("vk.com");
+                Thread.sleep(2000);
+
+                WebElement playerVKHover = driver.findElement(By.className("videoplayer_media"));
+                actions.click(playerVKHover).build().perform();
+                WebElement playerVK = driver.findElement(By.className("_bars_wrap"));
+                actions.moveToElement(playerVK).click().build().perform();
+                actions.click(playerVKHover).build().perform();
+            }
+
+            if (driver.getCurrentUrl().contains("youtube.com")) {
+
+                WebElement playerYT = driver.findElement(By.className("ytp-progress-bar-padding"));
+                actions.click(playerYT).build().perform();
+
+            }
+
+        } catch (NoSuchElementException | InterruptedException e) {
         }
     }
 
@@ -102,7 +120,7 @@ public class WebBrowser {
         while ((url = bufferedReader.readLine()) != null) {
 
             driver.get(url);
-            ugcSitesPlayerClicker();
+            playerClickerUGC();
             waitForLoad(driver, 4000);
 
             String pageSource = driver.getPageSource();
@@ -111,7 +129,6 @@ public class WebBrowser {
                 writer.write(url + "," + driver.getCurrentUrl().trim() + "," + "Rbt_" + screenCount + "\n");
             }
             if (pageSource.contains("https://www.cloudflare.com/5xx-error-landing?utm_source=iuam")) {
-                waitForLoad(driver, 6000);
                 writer.write(url + "," + "Cloudflare DDoS Protection" + "," + "Rbt_" + screenCount + "\n");
             } else {
 
