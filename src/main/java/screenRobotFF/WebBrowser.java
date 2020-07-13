@@ -1,15 +1,14 @@
 package screenRobotFF;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.firefox.ProfilesIni;
 import org.openqa.selenium.interactions.Actions;
 
 import javax.imageio.ImageIO;
+import java.awt.Rectangle;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -21,7 +20,6 @@ public class WebBrowser {
     private static final String path = "src/main/resources/screenshots/";
     private static final String inputPATH = "src/main/resources/input.txt";
     private static final String resultTablePATH = "src/main/resources/resultTable.csv";
-
 
     public static void autoScreenshot(int screenCount) {
 
@@ -62,14 +60,15 @@ public class WebBrowser {
             System.setProperty("webdriver.gecko.driver", "src/main/resources/Geckodriver/geckodriver.exe");
         }
 
-        //ProfilesIni profile = new ProfilesIni();
+        ProfilesIni profile = new ProfilesIni();
+        FirefoxProfile myprofile = profile.getProfile("Robot");
         FirefoxOptions opt = new FirefoxOptions();
-        FirefoxProfile robotProfile = new FirefoxProfile();
-//        robotProfile.setPreference("network.proxy.type", 1);
-//        robotProfile.setPreference("network.proxy.socks", "51.144.228.148");
-//        robotProfile.setPreference("network.proxy.socks_port", 1080);
 
-        opt.setProfile(robotProfile);
+        //Прокси
+//        myprofile.setPreference("network.proxy.type", 1);
+//        myprofile.setPreference("network.proxy.socks", "51.144.228.148");
+//        myprofile.setPreference("network.proxy.socks_port", 1080);
+        opt.setProfile(myprofile);
 
         driver = new FirefoxDriver(opt);
         driver.manage().window().maximize();
@@ -102,13 +101,14 @@ public class WebBrowser {
                 actions.click(playerVKHover).build().perform();
             }
 
-            if (driver.getCurrentUrl().contains("sibnet.ru")){
+            if (driver.getCurrentUrl().contains("video.sibnet.ru")) {
                 System.out.println("sibnet.ru");
-                WebElement playerSibnetHover = driver.findElement(By.className("vjs-big-play-button"));
-                Thread.sleep(2000);
-                actions.click(playerSibnetHover).build().perform();
-                WebElement playerSibnet = driver.findElement(By.className("vjs-progress-tip"));
-                actions.moveToElement(playerSibnet).click().build().perform();
+
+                driver.findElement(By.id("video_html5_wrapper")).sendKeys("video_html5_wrapper" + Keys.SPACE);
+                driver.findElement(By.id("video_html5_wrapper")).sendKeys("video_html5_wrapper" + Keys.ARROW_RIGHT);
+                driver.findElement(By.id("video_html5_wrapper")).sendKeys("video_html5_wrapper" + Keys.ARROW_RIGHT);
+                driver.findElement(By.id("video_html5_wrapper")).sendKeys("video_html5_wrapper" + Keys.ARROW_RIGHT);
+                driver.findElement(By.id("video_html5_wrapper")).sendKeys("video_html5_wrapper" + Keys.SPACE);
             }
 
             if (driver.getCurrentUrl().contains("youtube.com")) {
@@ -137,7 +137,12 @@ public class WebBrowser {
 
         while ((url = bufferedReader.readLine()) != null) {
 
-            driver.get(url);
+            try {
+                driver.get(url);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             playerClickerUGC();
             waitForLoad(driver, 4000);
 
@@ -149,11 +154,11 @@ public class WebBrowser {
             if (pageSource.contains("https://www.cloudflare.com/5xx-error-landing?utm_source=iuam")) {
                 writer.write(url + "," + "Cloudflare DDoS Protection" + "," + "WKr_" + screenCount + "\n");
             } else {
-
                 writer.write(url + "," + "NoRedirect" + "," + "WKr_" + screenCount + "\n");
             }
             autoScreenshot(screenCount);
             screenCount++;
+
         }
         writer.close();
         reader.close();
