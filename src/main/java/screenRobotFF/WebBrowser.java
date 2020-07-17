@@ -17,9 +17,9 @@ import java.io.*;
 public class WebBrowser {
 
     private static WebDriver driver;
-    private static final String path = "src/main/resources/screenshots/";
-    private static final String inputPATH = "src/main/resources/input.txt";
-    private static final String resultTablePATH = "src/main/resources/resultTable.csv";
+    private static final String path = "./screen";
+    private static final String inputPATH = "input.txt";
+    private static final String resultTablePATH = "resultTable.csv";
 
     public static void autoScreenshot(int screenCount) {
 
@@ -36,7 +36,7 @@ public class WebBrowser {
         }
         BufferedImage screenShot = robot.createScreenCapture(new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
         try {
-            ImageIO.write(screenShot, "JPG", new File(path, "WKr" + screenCount + ".jpg"));
+            ImageIO.write(screenShot, "JPG", new File(path, "WKr_" + screenCount + ".jpg"));
         } catch (IOException e) {
             e.printStackTrace();
         }
