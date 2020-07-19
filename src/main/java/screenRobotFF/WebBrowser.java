@@ -1,6 +1,9 @@
 package screenRobotFF;
 
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
@@ -8,23 +11,25 @@ import org.openqa.selenium.firefox.ProfilesIni;
 import org.openqa.selenium.interactions.Actions;
 
 import javax.imageio.ImageIO;
-import java.awt.Rectangle;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.file.Paths;
 
 
 public class WebBrowser {
 
-    private static WebDriver driver;
+    private static FirefoxDriver driver;
     private static final String path = "./screen";
     private static final String inputPATH = "input.txt";
     private static final String resultTablePATH = "resultTable.csv";
+    private static final String extensionPath = "./src/main/resources/ublock_origin-1.28.2-an+fx.xpi";
+    private static String url;
+    private static int screenCount = 1;
 
     public static void autoScreenshot(int screenCount) {
 
         //Метод для Скриншота
-
         File dir = new File(path);
         dir.mkdir();
 
@@ -42,7 +47,7 @@ public class WebBrowser {
         }
     }
 
-    public static void waitForLoad(WebDriver driver, int time) {
+    public static void waitForLoad(FirefoxDriver driver, int time) {
         //Даем странице прогрузиться
         try {
             Thread.sleep(time);
@@ -60,17 +65,18 @@ public class WebBrowser {
             System.setProperty("webdriver.gecko.driver", "src/main/resources/Geckodriver/geckodriver.exe");
         }
 
-        ProfilesIni profile = new ProfilesIni();
-        FirefoxProfile myprofile = profile.getProfile("Robot");
+        FirefoxProfile profile = new ProfilesIni().getProfile("default-release");
         FirefoxOptions opt = new FirefoxOptions();
+        opt.setProfile(profile);
 
-        //Прокси
-//        myprofile.setPreference("network.proxy.type", 1);
-//        myprofile.setPreference("network.proxy.socks", "51.144.228.148");
-//        myprofile.setPreference("network.proxy.socks_port", 1080);
-        opt.setProfile(myprofile);
+        // Прокси
+//        profile.setPreference("network.proxy.type", 1);
+//        profile.setPreference("network.proxy.socks", "51.144.228.148");
+//        profile.setPreference("network.proxy.socks_port", 1080);
+
 
         driver = new FirefoxDriver(opt);
+        driver.installExtension(Paths.get(extensionPath));
         driver.manage().window().maximize();
     }
 
@@ -79,6 +85,7 @@ public class WebBrowser {
         try {
 
             Actions actions = new Actions(driver);
+
 
             if (driver.getCurrentUrl().contains("ok.ru")) {
 
@@ -121,46 +128,56 @@ public class WebBrowser {
         }
     }
 
+    public static void resultFileWriter() {
+
+        //Открываем файл на запись результатов resultTable.csv (разделетиль "," )
+
+        PrintWriter printWriter = null;
+        try {
+            printWriter = new PrintWriter(new BufferedWriter(new FileWriter(resultTablePATH, true)));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        String pageSource = driver.getPageSource(); // Для проверки кода на Cloudflare DDoS Protection
+
+        if (!(url.equals(driver.getCurrentUrl().trim()))) {
+            printWriter.write(url + "," + driver.getCurrentUrl().trim() + "," + "WKr_" + screenCount + "\n");
+        }
+        if (pageSource.contains("https://www.cloudflare.com/5xx-error-landing?utm_source=iuam")) {
+            printWriter.write(url + "," + "Cloudflare DDoS Protection" + "," + "WKr_" + screenCount + "\n");
+        } else {
+            printWriter.write(url + "," + "NoRedirect" + "," + "WKr_" + screenCount + "\n");
+        }
+
+        printWriter.close();
+
+    }
+
     public static void main(String[] args) throws IOException {
 
         browserSetUp();
 
-        //Открываем файл на запись результатов resultTable.csv (разделетиль "," )
-        FileWriter writer = new FileWriter(resultTablePATH);
-        writer.write("URL" + "," + "REDIRECT STATUS" + "," + "SCREENSHOT" + "\n");
-
         //Читаем файл input.txt
         FileReader reader = new FileReader(inputPATH);
         BufferedReader bufferedReader = new BufferedReader(reader);
-        String url;
-        int screenCount = 1;
+
 
         while ((url = bufferedReader.readLine()) != null) {
 
             try {
                 driver.get(url);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
             playerClickerUGC();
             waitForLoad(driver, 4000);
-
-            String pageSource = driver.getPageSource(); // Для проверки кода на Cloudflare DDoS Protection
-
-            if (!(url.equals(driver.getCurrentUrl().trim()))) {
-                writer.write(url + "," + driver.getCurrentUrl().trim() + "," + "WKr_" + screenCount + "\n");
-            }
-            if (pageSource.contains("https://www.cloudflare.com/5xx-error-landing?utm_source=iuam")) {
-                writer.write(url + "," + "Cloudflare DDoS Protection" + "," + "WKr_" + screenCount + "\n");
-            } else {
-                writer.write(url + "," + "NoRedirect" + "," + "WKr_" + screenCount + "\n");
-            }
             autoScreenshot(screenCount);
+            resultFileWriter();
             screenCount++;
-
         }
-        writer.close();
         reader.close();
         driver.quit();
     }
