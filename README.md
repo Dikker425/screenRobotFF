@@ -14,8 +14,8 @@
 
 **На чем написано:**
 
-java
-Selenium (Используется Firefox WebDriver)
+- java
+- Selenium (Используется Firefox WebDriver)
 
 **Известные баги:**
 
